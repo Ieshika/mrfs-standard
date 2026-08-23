@@ -1,5 +1,7 @@
 # MRFS — Marketplace Ranking Fairness Standard
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22073259.svg)](https://doi.org/10.5281/zenodo.22073259)
+
 **A standard for auditing, governing, and enabling independent oversight of fairness in marketplace ranking and recommendation systems.**
 
 Version 1.0 · Author: Ieshika Chandra
