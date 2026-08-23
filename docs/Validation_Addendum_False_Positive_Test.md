@@ -2,6 +2,8 @@
 
 **Status: PASS.** This addendum complements Volume 6 (Sample Audit Report) and closes a validation gap identified in project review: the original Sample Audit Report validated only that the protocol detects a known, intentionally-injected disparity. It did not test whether the protocol avoids flagging a genuinely fair system. This document does that.
 
+**Note:** this test ran once, at n=250,000 events. A follow-up test found that at *smaller* event-log volumes, the point-estimate-only version of the threshold logic used here produced real false positives — see `docs/Validation_Addendum_Confidence_Intervals.md` for that finding and the fix (confidence intervals plus an INSUFFICIENT_DATA status). The result below, at this scale, is unaffected by that fix.
+
 ## 1. Purpose
 
 A fairness audit methodology is only trustworthy if it satisfies two independent conditions:

@@ -9,13 +9,36 @@ deliberately code living in `src/`, not a 7th documentation volume.
 - **metrics.py** -- Core metric implementations: E1 (ExposureShare@K), E2
   (Mean Rank Position/Delta), E3 (Exposure Gini), O1/O2/O3 (CTR/CVR parity
   and Disparate Impact), S1 (drift), and `evaluate_thresholds()` (Volume 2
-  Section 6 pass/monitor/review bands). Validated against both a
-  known-disparity synthetic dataset (Volume 6) and a genuinely-fair
-  synthetic dataset (`docs/Validation_Addendum_False_Positive_Test.md`).
+  Section 6 pass/monitor/review bands). E1, E2, and O1-O3 each return a 95%
+  bootstrap confidence interval alongside their point estimate (event-level
+  resampling -- see the module docstring for why), and `evaluate_thresholds()`
+  uses the interval, not just the point estimate, to decide status --
+  including a fourth status, INSUFFICIENT_DATA, for when the interval
+  straddles a threshold line. `classify_ci()` is the reusable classification
+  function behind this. Validated against a known-disparity synthetic dataset
+  (Volume 6), a genuinely-fair synthetic dataset
+  (`docs/Validation_Addendum_False_Positive_Test.md`), and a small-sample
+  false-positive test that found and fixed a real gap
+  (`docs/Validation_Addendum_Confidence_Intervals.md`).
 - **generate_fair_dataset.py** -- Synthetic "null case" dataset generator
   used for the false-positive counter-test.
 - **run_false_positive_test.py** -- Runs the null-case dataset through
   `metrics.py` and reports pass/fail.
+- **run_small_sample_false_positive_test.py** -- Repeats the null-case test
+  across many seeds at multiple event-log scales (10,000 up to 250,000) and
+  reports the empirical false-positive rate at each. See
+  `docs/Validation_Addendum_Confidence_Intervals.md`.
+- **generate_drift_scenario_dataset.py** -- Builds two synthetic 16-week
+  datasets: `drift_scenario` (a real rank-position regression against Small
+  sellers is injected starting week 8) and `stable_scenario` (a model-version
+  label changes at the same week, but nothing behavioral does -- a null
+  control). Used for the S1/S2 scenario test.
+- **run_drift_regression_test.py** -- Runs both scenarios through
+  `es_at_k_drift()` (S1) and a directly-computed pre/post average delta (S2),
+  plus a corroborating absolute-E1 check, and reports pass/fail on both the
+  true-positive and true-negative direction. See
+  `docs/Validation_Addendum_Drift_Regression_Test.md` for the full write-up,
+  including a caveat about S1's trailing-window behavior this test surfaced.
 - **query_set.py** -- The fixed, versioned, published query list for the
   Etsy real-data pilot. Don't edit in place -- bump the version and log
   why if it needs to change.
@@ -27,6 +50,24 @@ deliberately code living in `src/`, not a 7th documentation volume.
   E1/E2/E3 against it using the real `metrics.py` functions.
 - **generate_audit_report.py** -- Formats a pilot run's metric results into
   a standardized markdown report under `reports/`.
+
+## Running the S1/S2 drift and regression scenario test
+
+```
+python3 generate_drift_scenario_dataset.py
+python3 run_drift_regression_test.py
+```
+
+No external API or key required -- fully synthetic, seeded for reproducibility.
+
+## Running the small-sample false-positive test
+
+```
+python3 run_small_sample_false_positive_test.py
+```
+
+Takes a few minutes (repeats dataset generation and metric computation across
+many seeds and scales). No external API or key required.
 
 ## Running the Etsy pilot
 

@@ -31,10 +31,12 @@ Six volumes, deliberately not expanded beyond this for v1.0:
 
 Cohorts: Small/Large (listing-volume quartile), New/Established (12-month tenure threshold), optional protected-class cohorts (minority/women/veteran-owned, where flagged).
 
+E1, E2, and O1–O3 are each reported with a 95% confidence interval alongside the point estimate (nonparametric, event-level bootstrap — see `src/metrics.py`'s module docstring), and threshold status is determined from the interval, not the point estimate alone. A fourth status, INSUFFICIENT_DATA, applies when the interval straddles a threshold line — this replaces what was previously a point-estimate-only comparison that produced an 8% false Review Required rate at small audit scales; see `docs/Validation_Addendum_Confidence_Intervals.md`.
+
 ## Tech stack
 
 - **Docs:** .docx, edited via unzip → `word/document.xml` → `merge_runs.py` → `str_replace` → rezip → `validate.py` (see `/mnt/skills/public/docx/SKILL.md` conventions if working in Claude environment; otherwise treat as any OOXML document)
-- **Metrics implementation (planned, not yet built):** Python — numpy, pandas, scipy
+- **Metrics implementation:** Python — numpy, pandas (`src/metrics.py` and the accompanying test/validation scripts in `src/`)
 - **Publication targets:** GitHub (this repo) → Zenodo (DOI via GitHub release) → arXiv/SSRN preprint → FAccT/AIES/RecSys workshop track (fast turnaround vs. full conference cycles)
 
 ## Explicit non-goals for v1.0 (do not add without a deliberate scope review)

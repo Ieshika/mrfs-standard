@@ -1,32 +1,40 @@
 """
 MRFS Etsy Real-Data Pilot -- Audit Report Generator (src/generate_audit_report.py)
 
-Reference implementation component (see DECISIONS.md D12). Formats the
-metrics computed by run_etsy_pilot.py into a standardized markdown report,
-per DECISIONS.md D13's "standardized report output" requirement.
+Reference implementation component. Formats the metrics computed by
+run_etsy_pilot.py into a standardized markdown report.
 
 Deliberately does NOT call metrics.py's evaluate_thresholds() -- that
 function requires an `outcome` dict with ctr_di_ratio/cvr_di_ratio, which
-this pilot cannot populate (see D13's scope limit: no public Etsy
-click/conversion data). E1 pass/monitor/review status is evaluated locally
-below, using the identical Volume 2 Section 6 bands evaluate_thresholds()
-applies to E1, so this is not a new threshold policy -- just an E1-only
-subset of the same one, applied without touching metrics.py's validated
-(true-positive- and false-positive-tested) code.
+this pilot cannot populate (no public Etsy click/conversion data). E1
+pass/monitor/review/insufficient-data status is evaluated locally below via
+metrics.py's own classify_ci(), using each cohort's 95% bootstrap confidence
+interval (not just its point estimate) -- the identical logic
+evaluate_thresholds() applies to E1, reused directly rather than
+re-implemented, so this stays a subset of the same validated classification,
+not a second threshold policy.
 """
 
 import os
+import sys
 from datetime import datetime, timezone
 
 import pandas as pd
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metrics import classify_ci  # noqa: E402
 
-def _e1_status(es_at_k: float) -> str:
-    if pd.isna(es_at_k):
+
+def _e1_status(row: pd.Series) -> str:
+    if pd.isna(row.get("ES@K")):
         return "N/A"
-    if es_at_k >= 0.85:
+    if "ES@K_ci_lower" in row and "ES@K_ci_upper" in row:
+        return classify_ci(row["ES@K_ci_lower"], row["ES@K_ci_upper"], review_line=0.80, monitor_line=0.85)
+    # Fallback for older data without CI columns.
+    es = row["ES@K"]
+    if es >= 0.85:
         return "PASS"
-    if es_at_k >= 0.80:
+    if es >= 0.80:
         return "MONITOR"
     return "REVIEW_REQUIRED"
 
@@ -52,7 +60,15 @@ def generate_report(results: dict, events_df: pd.DataFrame, sellers_df: pd.DataF
         "(E1 ExposureShare@K, E2 Mean Rank Position, E3 Exposure Gini). "
         "Outcome metrics (O1-O3, CTR/CVR disparate impact) are not computed -- "
         "Etsy's public API does not expose click-through or conversion data for "
-        "listings other than your own shop's. See DECISIONS.md D13."
+        "listings other than your own shop's."
+    )
+    lines.append("")
+    lines.append(
+        "**On status column below:** every E1 status is based on a 95% bootstrap "
+        "confidence interval, not the point estimate alone -- this pilot typically runs "
+        "at a small event count per query set, where INSUFFICIENT_DATA is the honest, "
+        "expected result far more often than a confident PASS/MONITOR/REVIEW_REQUIRED. "
+        "See `docs/Validation_Addendum_Confidence_Intervals.md` for why."
     )
     lines.append("")
 
@@ -62,26 +78,48 @@ def generate_report(results: dict, events_df: pd.DataFrame, sellers_df: pd.DataF
 
         es_df = cohort_results["es_at_k"].copy()
         if not es_df.empty:
-            es_df["status"] = es_df["ES@K"].apply(_e1_status)
+            es_df["status"] = es_df.apply(_e1_status, axis=1)
         lines.append("### E1 -- ExposureShare@K (k=10)")
         lines.append("")
-        lines.append(f"| {cohort_col} | cohort size | top-K count | observed share | proportional share | ES@K | status |")
-        lines.append("|---|---|---|---|---|---|---|")
-        for _, row in es_df.iterrows():
-            lines.append(
-                f"| {row[cohort_col]} | {row['cohort_size']} | {row['cohort_top_k_count']} | "
-                f"{row['observed_share']:.3f} | {row['proportional_share']:.3f} | "
-                f"{row['ES@K']:.3f} | {row['status']} |"
-            )
+        has_ci = "ES@K_ci_lower" in es_df.columns
+        if has_ci:
+            lines.append(f"| {cohort_col} | cohort size | top-K count | observed share | "
+                          f"proportional share | ES@K | 95% CI | status |")
+            lines.append("|---|---|---|---|---|---|---|---|")
+            for _, row in es_df.iterrows():
+                lines.append(
+                    f"| {row[cohort_col]} | {row['cohort_size']} | {row['cohort_top_k_count']} | "
+                    f"{row['observed_share']:.3f} | {row['proportional_share']:.3f} | "
+                    f"{row['ES@K']:.3f} | [{row['ES@K_ci_lower']:.3f}, {row['ES@K_ci_upper']:.3f}] | "
+                    f"{row['status']} |"
+                )
+        else:
+            lines.append(f"| {cohort_col} | cohort size | top-K count | observed share | proportional share | ES@K | status |")
+            lines.append("|---|---|---|---|---|---|---|")
+            for _, row in es_df.iterrows():
+                lines.append(
+                    f"| {row[cohort_col]} | {row['cohort_size']} | {row['cohort_top_k_count']} | "
+                    f"{row['observed_share']:.3f} | {row['proportional_share']:.3f} | "
+                    f"{row['ES@K']:.3f} | {row['status']} |"
+                )
         lines.append("")
 
         rank_df = cohort_results["mean_rank"]
         lines.append("### E2 -- Mean Rank Position")
         lines.append("")
-        lines.append(f"| {cohort_col} | mean rank | std | n |")
-        lines.append("|---|---|---|---|")
-        for _, row in rank_df.iterrows():
-            lines.append(f"| {row[cohort_col]} | {row['mean_rank']:.2f} | {row['std_rank']:.2f} | {row['n']} |")
+        has_rank_ci = "mean_rank_ci_lower" in rank_df.columns
+        if has_rank_ci:
+            lines.append(f"| {cohort_col} | mean rank | 95% CI | std | n |")
+            lines.append("|---|---|---|---|---|")
+            for _, row in rank_df.iterrows():
+                lines.append(f"| {row[cohort_col]} | {row['mean_rank']:.2f} | "
+                              f"[{row['mean_rank_ci_lower']:.2f}, {row['mean_rank_ci_upper']:.2f}] | "
+                              f"{row['std_rank']:.2f} | {row['n']} |")
+        else:
+            lines.append(f"| {cohort_col} | mean rank | std | n |")
+            lines.append("|---|---|---|---|")
+            for _, row in rank_df.iterrows():
+                lines.append(f"| {row[cohort_col]} | {row['mean_rank']:.2f} | {row['std_rank']:.2f} | {row['n']} |")
         lines.append("")
 
         lines.append("### E3 -- Exposure Gini (within cohort, top-K)")
@@ -95,8 +133,8 @@ def generate_report(results: dict, events_df: pd.DataFrame, sellers_df: pd.DataF
     lines.append("")
     lines.append(
         "- **Single run.** One measurement is a data point, not evidence of consistency. "
-        "Per DECISIONS.md D13, repeat this pilot across multiple different days before "
-        "drawing any conclusion about whether a pattern is stable."
+        "Repeat this pilot across multiple different days before drawing any conclusion "
+        "about whether a pattern is stable."
     )
     lines.append(
         "- **Rank-position proxy.** `rank_position` reflects the order Etsy's public API "
@@ -107,14 +145,16 @@ def generate_report(results: dict, events_df: pd.DataFrame, sellers_df: pd.DataF
     )
     lines.append(
         "- **Seller-size cohort is a median split**, not a strict top/bottom quartile "
-        "split as ARCHITECTURE.md's cohort scheme literally describes -- see DECISIONS.md D15."
+        "split as ARCHITECTURE.md's cohort scheme literally describes."
     )
     lines.append(
         "- **No outcome metrics.** E1-E3 only; see Scope limit above."
     )
     lines.append(
         "- **Small sample.** A handful of queries and shops is not a statistically powered "
-        "sample of Etsy's marketplace -- treat all numbers above as directional, not conclusive."
+        "sample of Etsy's marketplace. The 95% confidence intervals above make this "
+        "explicit rather than leaving it implicit -- treat an INSUFFICIENT_DATA status as "
+        "the expected, honest result at this scale, not a bug."
     )
     lines.append("")
 
