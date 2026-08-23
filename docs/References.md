@@ -6,7 +6,7 @@
 
 Tabassi, E. (2023). *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*. NIST AI 100-1. National Institute of Standards and Technology, Gaithersburg, MD. https://doi.org/10.6028/NIST.AI.100-1
 
-- Cited in: Volume 1 (positioning statement), Volume 4 (Governance Charter — NIST AI RMF alignment claim).
+- Cited in: Volume 1 (positioning statement), Volume 3 (Section 8, NIST AI RMF alignment claim — References added 2026-08-23), Volume 4 (Governance Charter — NIST AI RMF alignment claim).
 - Use: MRFS's GOVERN/MAP/MEASURE/MANAGE-adjacent structure in Volume 4 should cite this directly rather than referencing "NIST AI RMF" generically.
 
 ## Ranking exposure-fairness metrics (AWRF / TREC Fair Ranking Track)
@@ -29,6 +29,7 @@ Singh, A., & Joachims, T. (2018). Fairness of Exposure in Rankings. *Proceedings
 Ursu, R. M. (2018). The Power of Rankings: Quantifying the Effect of Rankings on Online Consumer Search and Purchase Decisions. *Marketing Science*, 37(4), 530–552. https://doi.org/10.1287/mksc.2017.1072
 
 - Field-experiment evidence (Expedia) that rank position causally affects purchase outcomes — supports Volume 1's motivation for why exposure fairness matters commercially, not just normatively.
+- Cited in: Volume 1 (Section 1, Purpose — commercial-consequences paragraph added 2026-08-23, as [7]).
 
 Khenissi, S., & Nasraoui, O. (2020). Modeling and Counteracting Exposure Bias in Recommender Systems. *arXiv:2001.04832*. https://arxiv.org/abs/2001.04832
 
@@ -39,7 +40,7 @@ Khenissi, S., & Nasraoui, O. (2020). Modeling and Counteracting Exposure Bias in
 Equal Employment Opportunity Commission, Civil Service Commission, Department of Labor, & Department of Justice. (1978). *Uniform Guidelines on Employee Selection Procedures*, 29 C.F.R. § 1607 (1978), specifically § 1607.4(D). https://www.ecfr.gov/current/title-29/subtitle-B/chapter-XIV/part-1607
 
 - Origin of the "four-fifths" / 80% rule: "A selection rate for any race, sex, or ethnic group which is less than four-fifths (4/5) of the rate for the group with the highest rate will generally be regarded... as evidence of adverse impact."
-- Cited in: Volume 2 Section 6 (O3 CTR/CVR Disparate Impact threshold, currently described only as "EEOC four-fifths analogy" with no citation). The note explicitly states that this threshold was derived for employment selection decisions, not ranking exposure, and is adopted by analogy pending empirical calibration.
+- Cited in: Volume 2 Section 6 (O3 CTR/CVR Disparate Impact threshold, currently described only as "EEOC four-fifths analogy" with no citation), Volume 3 Section 4.2 (Disparate Impact Ratio table — References added 2026-08-23, as [2]). The note explicitly states that this threshold was derived for employment selection decisions, not ranking exposure, and is adopted by analogy pending empirical calibration.
 
 ## Related open-source fairness auditing toolkits
 
