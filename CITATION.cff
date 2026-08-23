@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this standard or its reference implementation, please cite it as below."
+title: "MRFS: Marketplace Ranking Fairness Standard"
+authors:
+  - family-names: "Chandra"
+    given-names: "Ieshika"
+version: 1.0.0
+date-released: "2026-08-23"
+license: "CC-BY-4.0"
+repository-code: "https://github.com/Ieshika/mrfs-standard"
+abstract: "MRFS is a deployable audit standard for measuring exposure and outcome fairness in marketplace ranking systems, translating academic fair-ranking research (NIST TREC Fair Ranking Track, AWRF) and NIST's AI Risk Management Framework into a concrete metric catalog, audit protocol, and governance process for commercial marketplaces."
+keywords:
+  - algorithmic fairness
+  - marketplace ranking
+  - audit protocol
+  - AI governance
+  - exposure fairness
