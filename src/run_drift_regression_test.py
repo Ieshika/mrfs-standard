@@ -6,7 +6,7 @@ against Small sellers starting at week 8) and the true-negative
 ("stable_scenario": model_version changes but nothing behavioral does)
 datasets through the real, unmodified metrics.py functions and checks:
 
-  1. S1 (es_at_k_drift) flags Monitor/Review Required drift in the weeks
+  1. S1 (es_at_k_drift_ci) flags Monitor/Review Required drift in the weeks
      after the injected regression in drift_scenario, and stays within Pass
      band (<10%) throughout stable_scenario.
   2. S2 (Model Regression Delta = ES@K(post avg) - ES@K(pre avg)) shows a
@@ -22,13 +22,29 @@ datasets through the real, unmodified metrics.py functions and checks:
 Volume 2 Section 6 S1 thresholds applied: Pass < 10% decline, Monitor >= 10%,
 Review Required >= 20% (or sustained > 2 consecutive weeks at >= 10%).
 
+S1 now uses a 95% bootstrap confidence interval on the drift statistic
+itself (es_at_k_drift_ci/classify_s1_ci in metrics.py), not just the raw
+point estimate -- see docs/Validation_Addendum_S1_Confidence_Intervals.md.
+This closes a gap a follow-up investigation found: the point-estimate-only
+version had a 92.5% family-wise false-alert rate on a genuinely stable
+system at floor-scale weekly volume (~42 events/week). The window (1-week
+current vs. 4-week trailing baseline) and S1's rate-of-change role are both
+unchanged from Volume 3 Section 6.1/Volume 5 Section 8's specification.
+sustained_weeks now increments on MONITOR/REVIEW_REQUIRED and resets on
+EITHER PASS or INSUFFICIENT_DATA (not just PASS) -- an unbroken run of
+CONFIRMED bad weeks, not merely point-estimate-bad weeks. At this dataset's
+volume (~300 query-events/week, well above the floor scale where this
+matters), detection is not meaningfully affected by the CI fix -- see the
+validation addendum for the floor-scale tradeoff this fix does introduce.
+
 Run generate_drift_scenario_dataset.py first to produce the two input CSVs.
-See docs/Validation_Addendum_Drift_Regression_Test.md for the full write-up,
-including a caveat about S1's trailing-window behavior this test surfaced.
+See docs/Validation_Addendum_Drift_Regression_Test.md for the original
+write-up (including a caveat about S1's trailing-window behavior) and
+docs/Validation_Addendum_S1_Confidence_Intervals.md for the CI fix.
 """
 
 import pandas as pd
-from metrics import exposure_share_at_k, es_at_k_drift, classify_ci
+from metrics import exposure_share_at_k, es_at_k_drift, es_at_k_drift_ci, classify_ci, classify_s1_ci
 
 DRIFT_START_WEEK = 8
 WINDOW = 4
@@ -36,6 +52,8 @@ COHORT = "Small"
 
 
 def weekly_es_at_k_series(events: pd.DataFrame, sellers: pd.DataFrame, cohort_value: str) -> pd.Series:
+    """Point-estimate-only series, kept for S2's pre/post averages and for
+    printing the weekly ES@K trend -- unchanged from before this fix."""
     values = {}
     for week, week_events in events.groupby("week"):
         es_df = exposure_share_at_k(week_events, sellers, k=10, cohort_col="seller_size", n_boot=200)
@@ -44,13 +62,10 @@ def weekly_es_at_k_series(events: pd.DataFrame, sellers: pd.DataFrame, cohort_va
     return pd.Series(values).sort_index()
 
 
-def classify_s1(drift_pct: float, sustained_weeks: int) -> str:
-    if drift_pct <= -20 or sustained_weeks > 2:
-        return "REVIEW_REQUIRED"
-    elif drift_pct <= -10:
-        return "MONITOR"
-    else:
-        return "PASS"
+def weekly_events_by_week(events: pd.DataFrame) -> dict:
+    """Raw per-week event slices, needed by es_at_k_drift_ci's event-level
+    bootstrap (which resamples each week's own events independently)."""
+    return {week: week_events for week, week_events in events.groupby("week")}
 
 
 def run_scenario(label: str):
@@ -62,27 +77,41 @@ def run_scenario(label: str):
     print("=" * 78)
 
     weekly_es = weekly_es_at_k_series(events, sellers, COHORT)
+    events_by_week = weekly_events_by_week(events)
     print(f"\nWeekly ExposureShare@10 ({COHORT} cohort):")
     print(weekly_es.round(3).to_string())
 
-    # --- S1: drift vs trailing 4-week average, for every week after the window fills ---
-    print(f"\n--- S1: ExposureShare@K Drift (window={WINDOW}) ---")
-    consecutive_monitor_or_worse = 0
+    # --- S1: drift vs trailing 4-week average, with a 95% bootstrap CI on
+    #     the drift statistic itself, for every week after the window fills ---
+    print(f"\n--- S1: ExposureShare@K Drift, with 95% CI (window={WINDOW}) ---")
+    sustained = 0
     max_sustained = 0
     s1_statuses = {}
-    for week in range(WINDOW, len(weekly_es)):
-        drift_pct = es_at_k_drift(weekly_es, current_week=week, window=WINDOW)
-        if drift_pct <= -10:
-            consecutive_monitor_or_worse += 1
+    n_weeks = max(events_by_week) + 1
+    for week in range(WINDOW, n_weeks):
+        if week not in events_by_week:
+            continue
+        baseline_weeks = [events_by_week[j] for j in range(week - WINDOW, week) if j in events_by_week]
+        result = es_at_k_drift_ci(events_by_week[week], baseline_weeks, sellers, COHORT,
+                                   cohort_col="seller_size", n_boot=1000, seed=week)
+        status = classify_s1_ci(result["drift_ci_lower"], result["drift_ci_upper"])
+
+        if status in ("MONITOR", "REVIEW_REQUIRED"):
+            sustained += 1
         else:
-            consecutive_monitor_or_worse = 0
-        max_sustained = max(max_sustained, consecutive_monitor_or_worse)
-        status = classify_s1(drift_pct, consecutive_monitor_or_worse)
+            sustained = 0
+        max_sustained = max(max_sustained, sustained)
+        if sustained > 2 and status != "REVIEW_REQUIRED":
+            status = "REVIEW_REQUIRED"
+
         s1_statuses[week] = status
         flag = "  <-- post-regression window" if week >= DRIFT_START_WEEK else ""
-        print(f"  week {week:2d}: drift = {drift_pct:+7.2f}%   status = {status:<16}{flag}")
+        lo, hi = result["drift_ci_lower"], result["drift_ci_upper"]
+        ci_str = f"[{lo:+7.2f}%, {hi:+7.2f}%]" if lo == lo and hi == hi else "[n/a]"  # nan != nan
+        print(f"  week {week:2d}: point drift = {result['drift_pct']:+7.2f}%   CI = {ci_str}"
+              f"   status = {status:<16}{flag}")
 
-    # --- S2: Model Regression Delta, pre vs post deployment ---
+    # --- S2: Model Regression Delta, pre vs post deployment (unchanged -- point-estimate metric) ---
     pre = weekly_es.loc[:DRIFT_START_WEEK - 1].mean()
     post = weekly_es.loc[DRIFT_START_WEEK:].mean()
     regression_delta = post - pre
@@ -103,7 +132,7 @@ def run_scenario(label: str):
           f"  ->  E1 status = {e1_status}")
 
     post_change_statuses = [s1_statuses[w] for w in s1_statuses if w >= DRIFT_START_WEEK]
-    any_flagged = any(s != "PASS" for s in post_change_statuses)
+    any_flagged = any(s in ("MONITOR", "REVIEW_REQUIRED") for s in post_change_statuses)
 
     return {
         "label": label,

@@ -35,6 +35,21 @@ Confidence intervals (E1, E2, O1-O3):
   independent evidence and understate the true uncertainty. Resampling
   whole events preserves that correlation structure, so the resulting
   interval is not artificially narrow.
+
+Confidence intervals (S1):
+  S1 (es_at_k_drift) had no uncertainty quantification at all until a
+  follow-up investigation found a 92.5% family-wise false-alert rate on a
+  genuinely stable system at floor-scale weekly volume (~42 events/week) --
+  see docs/Validation_Addendum_S1_Confidence_Intervals.md. es_at_k_drift_ci()
+  adds the same kind of bootstrap CI treatment E1/E2/O3 already have, using
+  classify_s1_ci() (NOT classify_ci() -- the boundary conventions differ,
+  see that function's docstring) to classify the CI against the unchanged
+  -10%/-20% thresholds. The 1-week-current/4-week-baseline window and S1's
+  rate-of-change (not sustained-disparity) role are both unchanged from
+  Volume 3 Section 6.1/Volume 5 Section 8's specification -- only the
+  point-estimate-vs-threshold comparison gained uncertainty quantification.
+  The original es_at_k_drift() is unchanged and still available for callers
+  that only need the point estimate.
 """
 
 import numpy as np
@@ -42,8 +57,21 @@ import pandas as pd
 
 
 def _bootstrap_percentile_ci(boot_values: np.ndarray, ci_level: float = 0.95):
-    """Two-sided percentile CI from an array of bootstrap replicate values."""
-    boot_values = boot_values[~np.isnan(boot_values)]
+    """
+    Two-sided percentile CI from an array of bootstrap replicate values.
+    Filters non-finite values (NaN and +-Inf), not just NaN -- a strict
+    superset of the original NaN-only filter. E1/E2/O3's own bootstraps can
+    never produce Inf (they divide by a fixed, non-resampled population
+    constant), so this is a no-op for them. S1's drift bootstrap (see
+    es_at_k_drift_ci) divides by a *resampled* baseline that can land at
+    exactly zero for a given replicate -- rare at the cohort shares this
+    project's synthetic tests used, not rare in general for a small/niche
+    cohort -- producing +-Inf (not NaN) that this filter must catch too, or
+    a small number of infinite replicates could silently corrupt the
+    percentile computation. See the S1 CI validation addendum, design
+    review item 1.
+    """
+    boot_values = boot_values[np.isfinite(boot_values)]
     if len(boot_values) == 0:
         return np.nan, np.nan
     alpha = 1 - ci_level
@@ -280,6 +308,152 @@ def es_at_k_drift(weekly_es_at_k: pd.Series, current_week: int, window: int = 4)
         return np.nan
     current = weekly_es_at_k.loc[current_week]
     return float((current - trailing.mean()) / trailing.mean() * 100)
+
+
+def _weekly_topk_arrays(week_events: pd.DataFrame, sellers: pd.DataFrame, cohort_value: str,
+                         cohort_col: str = "seller_size", k: int = 10):
+    """
+    Per-event top-K arrays for one week, for a single cohort value -- the
+    building block for S1's event-level bootstrap (es_at_k_drift_ci). Same
+    per-event pivot approach exposure_share_at_k() already uses, scoped to
+    one cohort value and one week's events.
+    Returns (per_event_cohort_count, per_event_total, proportional_share).
+    """
+    merged = week_events.merge(sellers[["seller_id", cohort_col]], on="seller_id", how="left")
+    top_k = merged[merged["rank_position"] <= k]
+    all_event_ids = week_events["event_id"].unique()
+    total_sellers = sellers["seller_id"].nunique()
+    cohort_size = int((sellers[cohort_col] == cohort_value).sum())
+    proportional_share = cohort_size / total_sellers if total_sellers else np.nan
+
+    per_event_cohort = (top_k[top_k[cohort_col] == cohort_value].groupby("event_id").size()
+                         .reindex(all_event_ids, fill_value=0).values.astype(float))
+    per_event_total = (top_k.groupby("event_id").size()
+                        .reindex(all_event_ids, fill_value=0).values.astype(float))
+    return per_event_cohort, per_event_total, proportional_share
+
+
+def _week_point_estimate(per_event_cohort: np.ndarray, per_event_total: np.ndarray,
+                          proportional_share: float) -> float:
+    total = per_event_total.sum()
+    if total == 0 or not proportional_share:
+        return np.nan
+    return float((per_event_cohort.sum() / total) / proportional_share)
+
+
+def _week_bootstrap_replicates(per_event_cohort: np.ndarray, per_event_total: np.ndarray,
+                                proportional_share: float, n_boot: int, rng: np.random.Generator) -> np.ndarray:
+    n = len(per_event_cohort)
+    if n == 0 or not proportional_share:
+        return np.full(n_boot, np.nan)
+    idx = rng.integers(0, n, size=(n_boot, n))
+    cc = per_event_cohort[idx].sum(axis=1)
+    tt = per_event_total[idx].sum(axis=1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return cc / tt / proportional_share
+
+
+def es_at_k_drift_ci(current_week_events: pd.DataFrame, baseline_weeks_events: list,
+                      sellers: pd.DataFrame, cohort_value: str, cohort_col: str = "seller_size",
+                      k: int = 10, n_boot: int = 1000, ci_level: float = 0.95, seed: int = None) -> dict:
+    """
+    S1 with a 95% bootstrap confidence interval on the drift statistic
+    itself, closing the gap the small-sample S1 investigation found: S1 had
+    no uncertainty quantification at all (unlike E1/E2/O3 since D19),
+    producing a 92.5% family-wise false-alert rate on a genuinely stable
+    system at floor-scale weekly volume (~42 events/week) -- see
+    docs/Validation_Addendum_S1_Confidence_Intervals.md.
+
+    current_week_events: raw events for the week being evaluated.
+    baseline_weeks_events: raw events for the WINDOW trailing weeks (default
+    4, matching the unchanged es_at_k_drift/Volume 3 Section 6.1 window --
+    this fix does not change the window, only adds uncertainty
+    quantification around the existing point-estimate comparison), in any
+    order -- each is resampled independently since they are disjoint
+    calendar weeks with no shared events (a stratified bootstrap, not a new
+    assumption -- the same event-level resampling E1/E2/O3 already use).
+
+    Method: for each of n_boot replicates, resample the current week's own
+    events and each baseline week's own events independently (with
+    replacement, same size as each week's real event count), recompute each
+    week's point estimate on the resampled data using the SAME formula
+    es_at_k_drift/exposure_share_at_k already use, average the 4 baseline
+    replicate values, then compute the drift replicate with the same
+    formula as es_at_k_drift. Percentile CI across replicates.
+
+    A baseline week's real (non-resampled) point estimate can be exactly
+    zero -- mirrors es_at_k_drift's existing `trailing.mean() == 0 -> nan`
+    guard: if the real baseline point estimate is zero or otherwise
+    non-finite, no bootstrap is attempted and this returns drift_ci_lower/
+    upper = nan (INSUFFICIENT_DATA once classified). A BOOTSTRAP REPLICATE's
+    baseline can independently land at exactly zero even when the real
+    baseline isn't (rare, but not negligible for small/niche cohorts);
+    _bootstrap_percentile_ci filters non-finite replicate values (not just
+    NaN) so a small number of these don't corrupt the resulting interval.
+    No epsilon/clipping is applied to "effectively zero but nonzero"
+    baseline replicates -- those are left as large-magnitude finite values,
+    which correctly widens the CI and lets classify_s1_ci's
+    INSUFFICIENT_DATA branch absorb the instability honestly.
+    """
+    rng = np.random.default_rng(seed)
+
+    base_arrays = [_weekly_topk_arrays(wk, sellers, cohort_value, cohort_col, k)
+                   for wk in baseline_weeks_events]
+    base_points = [_week_point_estimate(*a) for a in base_arrays]
+    base_point = float(np.mean(base_points)) if base_points else np.nan
+
+    cur_cohort, cur_total, cur_share = _weekly_topk_arrays(current_week_events, sellers, cohort_value,
+                                                            cohort_col, k)
+    cur_point = _week_point_estimate(cur_cohort, cur_total, cur_share)
+
+    if not base_points or base_point == 0 or not np.isfinite(base_point) or not np.isfinite(cur_point):
+        # Mirrors es_at_k_drift's existing zero/insufficient-baseline guard:
+        # no meaningful drift statistic can be formed from this week's real
+        # data (empty baseline, zero/non-finite baseline, or non-finite
+        # current-week estimate), so no bootstrap is attempted either.
+        return {"drift_pct": np.nan, "drift_ci_lower": np.nan, "drift_ci_upper": np.nan, "n_bootstrap": 0}
+
+    drift_pct = float((cur_point - base_point) / base_point * 100)
+
+    cur_reps = _week_bootstrap_replicates(cur_cohort, cur_total, cur_share, n_boot, rng)
+    base_reps_list = [_week_bootstrap_replicates(*a, n_boot, rng) for a in base_arrays]
+    base_reps = np.mean(base_reps_list, axis=0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        drift_reps = (cur_reps - base_reps) / base_reps * 100
+    lower, upper = _bootstrap_percentile_ci(drift_reps, ci_level)
+    n_valid = int(np.sum(np.isfinite(drift_reps)))
+
+    return {"drift_pct": drift_pct, "drift_ci_lower": lower, "drift_ci_upper": upper, "n_bootstrap": n_valid}
+
+
+def classify_s1_ci(lower: float, upper: float, monitor_line: float = -10.0, review_line: float = -20.0) -> str:
+    """
+    Classifies S1's drift CI as PASS / MONITOR / REVIEW_REQUIRED /
+    INSUFFICIENT_DATA. NOT a call to classify_ci() with negated arguments --
+    classify_ci()'s good-side-inclusive / bad-side-exclusive operator
+    convention does not reproduce the original point-estimate classify_s1's
+    bad-side-inclusive convention exactly at the -10%/-20% boundary values
+    (design review item 2; see docs/Validation_Addendum_S1_Confidence_Intervals.md).
+    This function is written to match the original point-estimate semantics
+    exactly instead:
+
+        drift_pct <= -20            -> REVIEW_REQUIRED   (bad side inclusive)
+        -20 < drift_pct <= -10       -> MONITOR            (bad side inclusive)
+        drift_pct > -10              -> PASS               (good side exclusive)
+
+    Verified by construction: setting lower = upper = drift_pct collapses
+    every branch below to exactly the single-threshold comparison above, at
+    every value including exactly -10 and exactly -20.
+    """
+    if lower is None or upper is None or not np.isfinite(lower) or not np.isfinite(upper):
+        return "INSUFFICIENT_DATA"
+    if lower > monitor_line:
+        return "PASS"
+    if upper <= review_line:
+        return "REVIEW_REQUIRED"
+    if lower > review_line and upper <= monitor_line:
+        return "MONITOR"
+    return "INSUFFICIENT_DATA"
 
 
 def classify_ci(lower: float, upper: float, review_line: float, monitor_line: float) -> str:
