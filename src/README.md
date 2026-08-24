@@ -20,6 +20,14 @@ deliberately code living in `src/`, not a 7th documentation volume.
   (`docs/Validation_Addendum_False_Positive_Test.md`), and a small-sample
   false-positive test that found and fixed a real gap
   (`docs/Validation_Addendum_Confidence_Intervals.md`).
+  S1 has its own CI-returning variant, `es_at_k_drift_ci()`, and a dedicated
+  classifier, `classify_s1_ci()` (NOT `classify_ci()` -- the boundary
+  convention at exactly -10%/-20% differs; see that function's docstring).
+  The original point-estimate `es_at_k_drift()` is unchanged and still
+  available. Closes a 92.5% floor-scale false-alert rate found in the
+  point-estimate-only version, with a real floor-scale detection-power
+  tradeoff explicitly flagged for governance sign-off, not resolved by the
+  fix itself -- see `docs/Validation_Addendum_S1_Confidence_Intervals.md`.
 - **generate_fair_dataset.py** -- Synthetic "null case" dataset generator
   used for the false-positive counter-test.
 - **run_false_positive_test.py** -- Runs the null-case dataset through
@@ -34,11 +42,14 @@ deliberately code living in `src/`, not a 7th documentation volume.
   label changes at the same week, but nothing behavioral does -- a null
   control). Used for the S1/S2 scenario test.
 - **run_drift_regression_test.py** -- Runs both scenarios through
-  `es_at_k_drift()` (S1) and a directly-computed pre/post average delta (S2),
-  plus a corroborating absolute-E1 check, and reports pass/fail on both the
-  true-positive and true-negative direction. See
-  `docs/Validation_Addendum_Drift_Regression_Test.md` for the full write-up,
-  including a caveat about S1's trailing-window behavior this test surfaced.
+  `es_at_k_drift_ci()`/`classify_s1_ci()` (S1, with its 95% CI) and a
+  directly-computed pre/post average delta (S2), plus a corroborating
+  absolute-E1 check, and reports pass/fail on both the true-positive and
+  true-negative direction. See
+  `docs/Validation_Addendum_Drift_Regression_Test.md` for the original
+  write-up, including a caveat about S1's trailing-window behavior this test
+  surfaced, and `docs/Validation_Addendum_S1_Confidence_Intervals.md` for the
+  CI fix.
 - **query_set.py** -- The fixed, versioned, published query list for the
   Etsy real-data pilot. Don't edit in place -- bump the version and log
   why if it needs to change.
