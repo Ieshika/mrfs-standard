@@ -88,9 +88,16 @@ App path).
 ```
 pip install pandas numpy requests
 export ETSY_API_KEY="your_keystring_here"
+export ETSY_SHARED_SECRET="your_shared_secret_here"
 python3 etsy_pilot_collector.py
 python3 run_etsy_pilot.py
 ```
+
+Both values come from the same "Your Apps" page in the Etsy Developer portal.
+Etsy's Open API v3 requires the x-api-key header to be
+`<keystring>:<shared_secret>` on every request, including public read-only
+endpoints -- see the `ETSY_SHARED_SECRET` note in `etsy_pilot_collector.py`'s
+module docstring.
 
 This produces a markdown report under `reports/`. Read the report's
 Limitations section before citing any number from it -- this pilot is

@@ -25,8 +25,17 @@ exposure order, not a certified match to what any specific buyer sees.
 
 Usage:
     export ETSY_API_KEY="your_keystring_here"
+    export ETSY_SHARED_SECRET="your_shared_secret_here"
     python3 etsy_pilot_collector.py
 Writes events.csv and sellers.csv into data/etsy_pilot_runs/<run_timestamp>/.
+
+Note: despite the variable name, Etsy's Open API v3 requires every request's
+x-api-key header to be "<keystring>:<shared_secret>", not the keystring
+alone -- documented at
+https://developer.etsy.com/documentation/essentials/authentication/, and
+confirmed by their own Quick Start tutorial's example for the public /ping
+endpoint. ETSY_SHARED_SECRET is that second value, from the same "Your Apps"
+page in the Etsy Developer portal as the keystring.
 """
 
 import os
@@ -51,13 +60,18 @@ class EtsyApiError(RuntimeError):
 
 
 def _get_api_key() -> str:
+    """Returns the x-api-key header value. Etsy's Open API v3 requires this to
+    be "<keystring>:<shared_secret>", not the keystring alone -- see this
+    module's docstring."""
     key = os.environ.get("ETSY_API_KEY")
-    if not key:
+    secret = os.environ.get("ETSY_SHARED_SECRET")
+    if not key or not secret:
         raise EtsyApiError(
-            "ETSY_API_KEY environment variable is not set. "
-            'Run: export ETSY_API_KEY="your_keystring_here"'
+            "ETSY_API_KEY and ETSY_SHARED_SECRET environment variables must both be set. "
+            'Run: export ETSY_API_KEY="your_keystring_here" '
+            'ETSY_SHARED_SECRET="your_shared_secret_here"'
         )
-    return key
+    return f"{key}:{secret}"
 
 
 def _request(path: str, params: dict, api_key: str) -> dict:
