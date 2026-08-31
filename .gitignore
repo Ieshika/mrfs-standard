@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 .env
+
+# Etsy real-data pilot output -- real third-party shop data, deliberately kept
+# local per project decision (2026-08-31): commit a synthesized write-up once
+# the longitudinal study is complete, not raw per-window data or the cache.
+data/etsy_pilot_runs/
+data/etsy_shop_cache.csv
+reports/

@@ -56,11 +56,28 @@ deliberately code living in `src/`, not a 7th documentation volume.
 - **etsy_pilot_collector.py** -- Collects real search-listing data from
   Etsy's public Open API v3 for every query in `query_set.py`, shapes it
   into `metrics.py`'s expected input contract, and saves it to
-  `data/etsy_pilot_runs/<timestamp>/`.
+  `data/etsy_pilot_runs/<timestamp>/`. Listing search results are always
+  fetched fresh; shop details (listing_count, shop_name, create_date) are
+  cached across runs in `data/etsy_shop_cache.csv`, keyed by seller_id and
+  refreshed only once a cached row is older than `SHOP_CACHE_STALENESS_DAYS`
+  -- needed for a repeated-measurement study (e.g. multiple collection
+  windows/day over several weeks) to stay well inside Etsy's daily request
+  quota. `seller_tenure` is derived fresh every run from each shop's
+  `create_date` against Volume 3 Section 3.1's exact boundary ("New:
+  <=12 months on platform" / "Established: >12 months on platform" --
+  `age_days > 365` is Established, exactly 365 is New); `seller_size` stays
+  a median split on `listing_active_count`, a deliberate, logged deviation
+  from Volume 3's literal quartile split (see D15) that this pilot is not
+  changing mid-study.
 - **run_etsy_pilot.py** -- Loads a saved Etsy pilot run and computes
   E1/E2/E3 against it using the real `metrics.py` functions.
 - **generate_audit_report.py** -- Formats a pilot run's metric results into
   a standardized markdown report under `reports/`.
+- **run_etsy_collector_test.py** -- Offline unit tests for the shop-info
+  cache (save/reload round-trip including the empty-cache edge case, cache
+  hit/miss/stale-refresh/failure-fallback behavior) and for `seller_tenure`
+  boundary exactness against Volume 3 Section 3.1. No API key or network
+  access needed -- `fetch_shop`/`fetch_listings_for_query` are monkeypatched.
 
 ## Running the S1/S2 drift and regression scenario test
 
@@ -79,6 +96,16 @@ python3 run_small_sample_false_positive_test.py
 
 Takes a few minutes (repeats dataset generation and metric computation across
 many seeds and scales). No external API or key required.
+
+## Running the Etsy collector unit tests
+
+```
+python3 run_etsy_collector_test.py
+```
+
+No API key, shared secret, or network access required -- fully offline,
+monkeypatched. Run this after any change to the shop-info cache or the
+`seller_tenure`/`seller_size` cohort logic before touching the real API.
 
 ## Running the Etsy pilot
 

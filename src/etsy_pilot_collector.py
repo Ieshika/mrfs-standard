@@ -29,6 +29,18 @@ Usage:
     python3 etsy_pilot_collector.py
 Writes events.csv and sellers.csv into data/etsy_pilot_runs/<run_timestamp>/.
 
+Shop-info cache: listing search results (events) are always fetched fresh --
+that's the whole point of a repeated-measurement study. Shop details
+(listing_count, shop_name, create_date) are cached across runs in
+data/etsy_shop_cache.csv, keyed by seller_id, and only re-fetched once a
+cached row is older than SHOP_CACHE_STALENESS_DAYS. Without this, a
+multi-window study re-fetches the same largely-overlapping set of shops on
+every window; with it, steady-state daily request volume after the first
+day or two is roughly just the query count, well inside Etsy's 5,000/day
+quota even at several windows/day. seller_tenure is never itself cached --
+it's recomputed from the cached create_date against each run's own "now",
+since a shop's age keeps advancing even on a cache hit.
+
 Note: despite the variable name, Etsy's Open API v3 requires every request's
 x-api-key header to be "<keystring>:<shared_secret>", not the keystring
 alone -- documented at
@@ -52,7 +64,9 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API_BASE = "https://api.etsy.com/v3/application"
 LISTINGS_PER_QUERY = 50          # top-50 gives headroom above Volume 2's K=10 threshold
 REQUEST_DELAY_SECONDS = 1.0      # polite pacing -- not a substitute for reading Etsy's real rate-limit headers
-TENURE_THRESHOLD_DAYS = 365      # Volume 3 / ARCHITECTURE.md: 12-month New/Established threshold
+TENURE_THRESHOLD_DAYS = 365      # Volume 3 Section 3.1: New "<=12mo", Established ">12mo" -- age_days > 365 is Established, exactly 365 is New
+SHOP_CACHE_PATH = os.path.join(REPO_ROOT, "data", "etsy_shop_cache.csv")
+SHOP_CACHE_STALENESS_DAYS = 7     # re-fetch listing_count/shop_name if the cached row is older than this
 
 
 class EtsyApiError(RuntimeError):
@@ -107,6 +121,48 @@ def fetch_shop(shop_id, api_key: str) -> dict:
     return _request(f"/shops/{shop_id}", {}, api_key)
 
 
+def _load_shop_cache(path: str = SHOP_CACHE_PATH) -> dict:
+    """Loads the persistent shop-info cache. Keyed by seller_id (int). Each
+    value holds the raw fields fetched from Etsy's /shops/{id} endpoint plus
+    fetched_at_epoch -- never a derived label like seller_tenure, since that
+    must be recomputed against "now" on every run even for a cache hit (a
+    shop's age keeps advancing even when its listing_count doesn't need a
+    fresh look)."""
+    if not os.path.exists(path):
+        return {}
+    try:
+        df = pd.read_csv(path)
+    except pd.errors.EmptyDataError:
+        # An empty cache (e.g. the very first run found zero shops) writes a
+        # header-less, columnless CSV; treat that the same as "no cache yet"
+        # rather than crashing every subsequent run.
+        return {}
+    cache = {}
+    for _, row in df.iterrows():
+        cache[int(row["seller_id"])] = {
+            "shop_name": row.get("shop_name"),
+            "listing_count": row.get("listing_count"),
+            "create_epoch": row.get("create_epoch") if pd.notna(row.get("create_epoch")) else None,
+            "fetched_at_epoch": float(row["fetched_at_epoch"]),
+        }
+    return cache
+
+
+def _save_shop_cache(cache: dict, path: str = SHOP_CACHE_PATH) -> None:
+    """Atomic write (temp file + os.replace) so a run interrupted mid-write
+    (e.g. a cron job killed by the machine sleeping) can't corrupt the cache
+    other windows depend on."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    rows = [
+        {"seller_id": seller_id, **fields}
+        for seller_id, fields in sorted(cache.items())
+    ]
+    df = pd.DataFrame(rows)
+    tmp_path = path + ".tmp"
+    df.to_csv(tmp_path, index=False)
+    os.replace(tmp_path, path)
+
+
 def collect(run_timestamp: str = None):
     """
     Runs every query in QUERIES against Etsy's public listings search,
@@ -153,27 +209,74 @@ def collect(run_timestamp: str = None):
 
     events_df = pd.DataFrame(event_rows)
 
-    seller_rows = []
+    # Shop info (listing_count, shop_name, create_epoch) is cached across runs,
+    # keyed by seller_id -- see _load_shop_cache's docstring for why
+    # seller_tenure itself is never cached. Without this, a multi-window study
+    # (e.g. 2x/day for 14 days) would re-fetch the same ~90% of shops on every
+    # single window; with it, steady-state cost after the first day or two is
+    # roughly the query count alone, comfortably inside Etsy's daily quota.
+    shop_cache = _load_shop_cache(SHOP_CACHE_PATH)
     now_epoch = datetime.now(timezone.utc).timestamp()
-    for shop_id in sorted(shop_ids_seen):
-        try:
-            shop = fetch_shop(shop_id, api_key)
-        except EtsyApiError as e:
-            print(f"[collector] WARNING: shop {shop_id} failed, skipping: {e}", file=sys.stderr)
-            continue
+    staleness_seconds = SHOP_CACHE_STALENESS_DAYS * 86400
+    seller_rows = []
+    cache_hits = 0
+    cache_misses = 0
+    cache_fallbacks = 0
 
-        create_epoch = shop.get("create_date") or shop.get("created_timestamp")
+    for shop_id in sorted(shop_ids_seen):
+        cached = shop_cache.get(shop_id)
+        is_fresh = cached is not None and (now_epoch - cached["fetched_at_epoch"]) < staleness_seconds
+
+        if is_fresh:
+            fields = cached
+            cache_hits += 1
+        else:
+            try:
+                shop = fetch_shop(shop_id, api_key)
+                create_epoch = shop.get("create_date") or shop.get("created_timestamp")
+                fields = {
+                    "shop_name": shop.get("shop_name"),
+                    "listing_count": shop.get("listing_active_count"),
+                    "create_epoch": create_epoch,
+                    "fetched_at_epoch": now_epoch,
+                }
+                shop_cache[shop_id] = fields
+                cache_misses += 1
+                time.sleep(REQUEST_DELAY_SECONDS)
+            except EtsyApiError as e:
+                if cached is not None:
+                    # API hiccup on a refresh attempt -- fall back to the stale
+                    # cached row rather than dropping this seller from the
+                    # window entirely (a transient failure shouldn't cost a
+                    # seller's whole observation).
+                    print(f"[collector] WARNING: shop {shop_id} refresh failed, using stale cache: {e}", file=sys.stderr)
+                    fields = cached
+                    cache_fallbacks += 1
+                else:
+                    print(f"[collector] WARNING: shop {shop_id} failed, skipping: {e}", file=sys.stderr)
+                    continue
+
+        create_epoch = fields.get("create_epoch")
         age_days = (now_epoch - create_epoch) / 86400 if create_epoch else None
         seller_rows.append({
             "seller_id": shop_id,
-            "shop_name": shop.get("shop_name"),
-            "listing_count": shop.get("listing_active_count"),
+            "shop_name": fields.get("shop_name"),
+            "listing_count": fields.get("listing_count"),
             "seller_tenure": (
-                "Established" if age_days is not None and age_days >= TENURE_THRESHOLD_DAYS
+                # Volume 3 Section 3.1 (Primary Cohort Splits) is boundary-exact:
+                # "New: <=12 months on platform" / "Established: >12 months on
+                # platform" -- a shop at exactly 365 days belongs in New, not
+                # Established. Strict > here, not >=.
+                "Established" if age_days is not None and age_days > TENURE_THRESHOLD_DAYS
                 else "New" if age_days is not None else None
             ),
         })
-        time.sleep(REQUEST_DELAY_SECONDS)
+
+    _save_shop_cache(shop_cache, SHOP_CACHE_PATH)
+    print(
+        f"[collector] shop cache: {cache_hits} hits, {cache_misses} fetched/refreshed, "
+        f"{cache_fallbacks} stale fallbacks (staleness window: {SHOP_CACHE_STALENESS_DAYS}d)"
+    )
 
     sellers_df = pd.DataFrame(seller_rows)
 
