@@ -78,6 +78,12 @@ deliberately code living in `src/`, not a 7th documentation volume.
   hit/miss/stale-refresh/failure-fallback behavior) and for `seller_tenure`
   boundary exactness against Volume 3 Section 3.1. No API key or network
   access needed -- `fetch_shop`/`fetch_listings_for_query` are monkeypatched.
+- **validate_query_set.py** -- Empirically validates a candidate query set
+  against the real API before it's committed to `query_set.py` or any
+  longitudinal collection starts: per-query result count, unique shops,
+  uniqueness ratio, single-shop concentration, and cohort coverage, plus
+  the same for any backup candidate queries run in the same pass. Flags
+  weak queries by evidence rather than by category name alone.
 
 ## Running the S1/S2 drift and regression scenario test
 
@@ -106,6 +112,21 @@ python3 run_etsy_collector_test.py
 No API key, shared secret, or network access required -- fully offline,
 monkeypatched. Run this after any change to the shop-info cache or the
 `seller_tenure`/`seller_size` cohort logic before touching the real API.
+
+## Validating a candidate query set before committing it
+
+```
+export ETSY_API_KEY="your_keystring_here"
+export ETSY_SHARED_SECRET="your_shared_secret_here"
+python3 validate_query_set.py
+```
+
+Edit `CANDIDATE_QUERIES` / `BACKUP_QUERIES` at the top of the script to the
+list under review. Uses one real API pass (warms the shop-info cache along
+the way) and prints per-query diagnostics plus a separate section for any
+backup candidates -- see the script's module docstring for the exact
+selection discipline (choose on data quality, never on which query shows a
+bigger apparent cohort disparity).
 
 ## Running the Etsy pilot
 
