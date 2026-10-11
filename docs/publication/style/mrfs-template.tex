@@ -1,0 +1,20 @@
+\documentclass[11pt]{article}
+\usepackage{calc}
+$for(header-includes)$
+$header-includes$
+$endfor$
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\hypersetup{pdftitle={$pdftitle$},pdfauthor={Ieshika Chandra},pdfsubject={$pdfsubject$}}
+\begin{document}
+$for(include-before)$
+$include-before$
+$endfor$
+$if(toc)$
+{\hypersetup{linkcolor=black}\setcounter{tocdepth}{$toc-depth$}\tableofcontents}
+\clearpage
+$endif$
+$body$
+$for(include-after)$
+$include-after$
+$endfor$
+\end{document}

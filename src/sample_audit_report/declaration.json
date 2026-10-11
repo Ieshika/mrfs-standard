@@ -1,0 +1,29 @@
+{
+ "audit_mode": "platform",
+ "population_type": "candidates",
+ "population_detail": "synthetic candidate set (all listings drawn for the request)",
+ "k": 10,
+ "cohort_definitions": {
+  "seller_size": "quartiles of completed orders in the 12 calendar months before audit start; Small at or below the lower quartile, Large at or above the upper quartile, Medium between",
+  "seller_tenure": "New if the opening date is later than 12 calendar months before audit start"
+ },
+ "review_line": 0.8,
+ "monitor_line": 0.85,
+ "drift_monitor_pct": -10.0,
+ "drift_review_pct": -20.0,
+ "data_quality_criteria": {
+  "max_rows_without_cohort_label_pct": 1.0,
+  "max_events_excluded_pct": 1.0,
+  "max_events_with_incomplete_top_k_pct": 1.0
+ },
+ "upstream_not_captured": "none (synthetic)",
+ "ordered_depth": 50,
+ "windows": {
+  "audit_window": "weeks 9 to 12",
+  "monitoring_window": "1 week",
+  "baseline_windows": 4
+ },
+ "resampling_unit": "ranking event",
+ "strata": "none",
+ "fixed_on": "2026-01-05"
+}

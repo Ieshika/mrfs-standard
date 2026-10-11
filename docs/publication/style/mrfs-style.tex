@@ -1,0 +1,141 @@
+% MRFS publication style (XeLaTeX). Shared by the Overview, the Technical Standard
+% and the Validation Report. Included through pandoc --include-in-header.
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont{Latin Modern Roman}
+\setsansfont{TeX Gyre Heros}[Scale=MatchLowercase]
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
+\setmathfont{Latin Modern Math}
+
+\usepackage[a4paper,top=27mm,bottom=27mm,left=27mm,right=24mm,headsep=9mm,footskip=11mm]{geometry}
+\usepackage{xcolor}
+\definecolor{mrfsnavy}{HTML}{1F3864}
+\definecolor{mrfsgrey}{HTML}{5A5A5A}
+\definecolor{mrfsrule}{HTML}{B8BFC9}
+\definecolor{reqbg}{HTML}{EEF2F8}
+\definecolor{recbg}{HTML}{F3F5F2}
+\definecolor{exbg}{HTML}{F7F7F7}
+\definecolor{limbg}{HTML}{FBF5EC}
+\definecolor{limrule}{HTML}{B07A2A}
+
+\usepackage{microtype}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{etoolbox}
+\usepackage{needspace}
+\usepackage{lastpage}
+\usepackage{pdflscape}
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=4pt,parsep=0pt}
+\setlength{\parskip}{5pt plus 1pt}
+\setlength{\parindent}{0pt}
+\linespread{1.08}
+
+% ---------- headings ----------
+\usepackage{titlesec}
+\setcounter{secnumdepth}{3}
+\titleformat{\section}{\sffamily\bfseries\Large\color{mrfsnavy}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\sffamily\bfseries\large\color{mrfsnavy}}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\sffamily\bfseries\normalsize\color{mrfsnavy}}{\thesubsubsection}{0.8em}{}
+\titlespacing*{\section}{0pt}{18pt plus 4pt}{8pt}
+\titlespacing*{\subsection}{0pt}{14pt plus 3pt}{5pt}
+\titlespacing*{\subsubsection}{0pt}{10pt plus 2pt}{3pt}
+\pretocmd{\section}{\needspace{8\baselineskip}}{}{}
+\pretocmd{\subsection}{\needspace{6\baselineskip}}{}{}
+
+% ---------- running headers ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{{\color{mrfsrule}\hrule height\headrulewidth width\headwidth}}
+\fancyhead[L]{\sffamily\footnotesize\color{mrfsgrey}\mrfsshorttitle}
+\fancyhead[R]{\sffamily\footnotesize\color{mrfsgrey}\mrfsversion}
+\fancyfoot[L]{\sffamily\footnotesize\color{mrfsgrey}\mrfsstatus}
+% front matter (roman numbers) shows "Page i"; the body shows "Page n of N"
+\newif\ifmrfsfront \mrfsfrontfalse
+\newcommand{\mrfspagelabel}{Page \thepage\ifmrfsfront\else\ of \pageref*{LastPage}\fi}
+\newcommand{\mrfsfrontmatter}{\pagenumbering{roman}\mrfsfronttrue}
+\newcommand{\mrfsmainmatter}{\pagenumbering{arabic}\mrfsfrontfalse}
+\fancyfoot[R]{\sffamily\footnotesize\color{mrfsgrey}\mrfspagelabel}
+\makeatletter\let\ps@plain\ps@fancy\makeatother% contents and first pages carry the same header and footer
+
+% ---------- tables and captions ----------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\setcounter{LTchunksize}{3}% rows join the page a few at a time, so a break never lands before the first header
+\usepackage{caption}
+\captionsetup{font={small,sf},labelfont={bf,color=mrfsnavy},justification=raggedright,singlelinecheck=false,skip=4pt}
+\captionsetup[table]{position=top}
+\usepackage{colortbl}
+\definecolor{tblhead}{HTML}{E9EDF3}
+\definecolor{tblrule}{HTML}{8A94A3}
+\renewcommand{\arraystretch}{1.38}
+\setlength{\aboverulesep}{0pt}\setlength{\belowrulesep}{0pt}
+\setlength{\heavyrulewidth}{0.8pt}\setlength{\lightrulewidth}{0.4pt}
+\newcommand{\versionrule}{\arrayrulecolor{tblrule}\specialrule{0.4pt}{0pt}{0pt}\arrayrulecolor{black}}
+\setlength{\LTpre}{6pt}\setlength{\LTpost}{8pt}
+\newcommand{\mrfstablesize}{\small}
+% a wide table that must stay portrait: one size smaller, tighter column gaps
+\newenvironment{mrfscompact}{\renewcommand{\mrfstablesize}{\footnotesize}\setlength{\tabcolsep}{3.5pt}}{}
+\AtBeginEnvironment{longtable}{\mrfstablesize\sffamily\raggedright\linespread{1.0}\selectfont}
+\AtBeginEnvironment{tabular}{\small\sffamily}
+\setlength{\tabcolsep}{5pt}
+
+% ---------- callouts: requirement, recommendation, example, limitation ----------
+\usepackage[most]{tcolorbox}
+\tcbset{mrfsbox/.style={enhanced,boxrule=0pt,arc=0pt,outer arc=0pt,
+  left=8pt,right=8pt,top=5pt,bottom=5pt,before skip=8pt,after skip=8pt,
+  fonttitle=\sffamily\bfseries\small,coltitle=mrfsnavy,attach title to upper,
+  after title={\par\smallskip}}}
+\newtcolorbox{mrfsrequirement}{mrfsbox,colback=reqbg,borderline west={3pt}{0pt}{mrfsnavy},title={Requirement}}
+\newtcolorbox{mrfsrecommendation}{mrfsbox,colback=recbg,borderline west={3pt}{0pt}{mrfsgrey},title={Recommendation}}
+\newtcolorbox{mrfsexample}{mrfsbox,colback=exbg,borderline west={1pt}{0pt}{mrfsrule},title={Example}}
+\newtcolorbox{mrfslimitation}{mrfsbox,colback=limbg,borderline west={3pt}{0pt}{limrule},title={Limitation}}
+\newtcolorbox{mrfsnote}{mrfsbox,colback=exbg,borderline west={1pt}{0pt}{mrfsrule},title={Note}}
+\newtcolorbox{mrfsformula}{enhanced,boxrule=0.4pt,colframe=mrfsrule,colback=white,arc=0pt,
+  left=10pt,right=10pt,top=4pt,bottom=4pt,before skip=8pt,after skip=8pt}
+
+% ---------- links, bookmarks, contents ----------
+\usepackage{xurl}
+\usepackage[hidelinks,bookmarksnumbered,bookmarksopen,pdfdisplaydoctitle]{hyperref}
+\usepackage{bookmark}
+\renewcommand{\contentsname}{Contents}
+\usepackage{tocloft}
+\renewcommand{\cftsecfont}{\sffamily\bfseries}
+\renewcommand{\cftsecpagefont}{\sffamily\bfseries}
+\renewcommand{\cftsubsecfont}{\normalfont}
+\setlength{\cftbeforesecskip}{4pt}
+\renewcommand{\cfttoctitlefont}{\sffamily\bfseries\Large\color{mrfsnavy}}
+\renewcommand{\cftaftertoctitle}{\par\vspace{-0.5\baselineskip}}
+% keep a heading with at least a few lines (or the start of a table) after it
+% \mrfskeep{len}: start a new page unless len remains. Unlike needspace it uses a forced
+% break decided from \pagetotal, so it never leaves a preferred break point that the page
+% builder could choose after a longtable has started (which repeats the table header).
+\makeatletter
+\newcommand{\mrfskeep}[1]{\par\penalty\@M\ifdim\dimexpr\pagegoal-\pagetotal\relax<#1\relax\newpage\fi}
+\makeatother
+
+% code: never break identifiers
+\renewcommand{\texttt}[1]{{\ttfamily\hyphenchar\font=-1 #1}}
+\sloppy
+\emergencystretch=2em
+
+% ---------- landscape pages with horizontal running headers ----------
+% Changes the physical page size for the enclosed pages, so headers and footers
+% stay horizontal and the table uses the full landscape area.
+\newenvironment{widepage}{%
+  \clearpage
+  \pdfpagewidth=297mm \pdfpageheight=210mm
+  \paperwidth=297mm \paperheight=210mm
+  \newgeometry{layoutwidth=297mm,layoutheight=210mm,top=22mm,bottom=20mm,left=25mm,right=25mm,headsep=8mm,footskip=10mm}%
+  \setlength{\headwidth}{\textwidth}}%
+ {\clearpage
+  \pdfpagewidth=210mm \pdfpageheight=297mm
+  \paperwidth=210mm \paperheight=297mm
+  \restoregeometry
+  \setlength{\headwidth}{\textwidth}}
+
+% ---------- bibliography ----------
+\newenvironment{mrfsrefs}{\small\setlength{\parskip}{4pt}\everypar{\hangindent=2.2em\hangafter=1}\raggedright}{\par}

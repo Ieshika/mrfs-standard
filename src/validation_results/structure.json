@@ -1,0 +1,108 @@
+{
+ "n_events": 5000,
+ "ranker": "ignores cohort",
+ "rows": [
+  {
+   "cohort": "Large",
+   "share_of_sellers": 0.25,
+   "share_of_listings": 0.62,
+   "share_of_top10": 0.622,
+   "v1_per_seller_formula": 2.489,
+   "E1": 1.005,
+   "E1_ci": [
+    0.998,
+    1.011
+   ],
+   "E1_status": "PASS"
+  },
+  {
+   "cohort": "Medium",
+   "share_of_sellers": 0.499,
+   "share_of_listings": 0.338,
+   "share_of_top10": 0.336,
+   "v1_per_seller_formula": 0.673,
+   "E1": 0.993,
+   "E1_ci": [
+    0.981,
+    1.004
+   ],
+   "E1_status": "PASS"
+  },
+  {
+   "cohort": "Small",
+   "share_of_sellers": 0.251,
+   "share_of_listings": 0.043,
+   "share_of_top10": 0.042,
+   "v1_per_seller_formula": 0.166,
+   "E1": 0.992,
+   "E1_ci": [
+    0.955,
+    1.034
+   ],
+   "E1_status": "PASS"
+  }
+ ],
+ "E2": [
+  {
+   "seller_size": "Large",
+   "E2": 0.5003,
+   "E2_ci_lower": 0.4994,
+   "E2_ci_upper": 0.5013,
+   "n_events_with_cohort": 5000,
+   "ordered_depth_min": 40,
+   "ordered_depth_max": 50
+  },
+  {
+   "seller_size": "Medium",
+   "E2": 0.4993,
+   "E2_ci_lower": 0.4976,
+   "E2_ci_upper": 0.501,
+   "n_events_with_cohort": 5000,
+   "ordered_depth_min": 40,
+   "ordered_depth_max": 50
+  },
+  {
+   "seller_size": "Small",
+   "E2": 0.497,
+   "E2_ci_lower": 0.4909,
+   "E2_ci_upper": 0.5035,
+   "n_events_with_cohort": 4378,
+   "ordered_depth_min": 40,
+   "ordered_depth_max": 50
+  }
+ ],
+ "E3": [
+  {
+   "seller_size": "Large",
+   "k": 10,
+   "E3": 0.4998,
+   "n_sellers": 500,
+   "n_sellers_zero_top_k": 0,
+   "top_k_positions": 31108
+  },
+  {
+   "seller_size": "Medium",
+   "k": 10,
+   "E3": 0.4793,
+   "n_sellers": 999,
+   "n_sellers_zero_top_k": 12,
+   "top_k_positions": 16811
+  },
+  {
+   "seller_size": "Small",
+   "k": 10,
+   "E3": 0.5103,
+   "n_sellers": 501,
+   "n_sellers_zero_top_k": 63,
+   "top_k_positions": 2081
+  },
+  {
+   "seller_size": "All sellers",
+   "k": 10,
+   "E3": 0.6377,
+   "n_sellers": 2000,
+   "n_sellers_zero_top_k": 75,
+   "top_k_positions": 50000
+  }
+ ]
+}

@@ -1,0 +1,290 @@
+[
+ {
+  "scenario": "stable for 12 weeks",
+  "events_per_week": 300,
+  "replicates": 100,
+  "runs_with_any_Monitor_or_Review_in_weeks_5_to_12": 0.0,
+  "by_week": {
+   "5": {
+    "PASS": 0.25,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.75,
+    "mean_S1_pct": 0.5,
+    "point_estimate_at_or_below_-10": 0.13
+   },
+   "6": {
+    "PASS": 0.23,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.77,
+    "mean_S1_pct": 1.3,
+    "point_estimate_at_or_below_-10": 0.12
+   },
+   "7": {
+    "PASS": 0.18,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.82,
+    "mean_S1_pct": 0.4,
+    "point_estimate_at_or_below_-10": 0.14
+   },
+   "8": {
+    "PASS": 0.21,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.79,
+    "mean_S1_pct": -1.0,
+    "point_estimate_at_or_below_-10": 0.19
+   },
+   "9": {
+    "PASS": 0.13,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.87,
+    "mean_S1_pct": -1.5,
+    "point_estimate_at_or_below_-10": 0.12
+   },
+   "10": {
+    "PASS": 0.26,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.74,
+    "mean_S1_pct": 1.1,
+    "point_estimate_at_or_below_-10": 0.12
+   },
+   "11": {
+    "PASS": 0.31,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.69,
+    "mean_S1_pct": 2.0,
+    "point_estimate_at_or_below_-10": 0.09
+   },
+   "12": {
+    "PASS": 0.28,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.72,
+    "mean_S1_pct": 0.7,
+    "point_estimate_at_or_below_-10": 0.15
+   }
+  }
+ },
+ {
+  "scenario": "stable for 12 weeks",
+  "events_per_week": 1000,
+  "replicates": 60,
+  "runs_with_any_Monitor_or_Review_in_weeks_5_to_12": 0.0,
+  "by_week": {
+   "5": {
+    "PASS": 0.467,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.533,
+    "mean_S1_pct": -0.3,
+    "point_estimate_at_or_below_-10": 0.017
+   },
+   "6": {
+    "PASS": 0.567,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.433,
+    "mean_S1_pct": -0.2,
+    "point_estimate_at_or_below_-10": 0.033
+   },
+   "7": {
+    "PASS": 0.55,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.45,
+    "mean_S1_pct": 0.5,
+    "point_estimate_at_or_below_-10": 0.017
+   },
+   "8": {
+    "PASS": 0.567,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.433,
+    "mean_S1_pct": 1.0,
+    "point_estimate_at_or_below_-10": 0.017
+   },
+   "9": {
+    "PASS": 0.467,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.533,
+    "mean_S1_pct": -1.3,
+    "point_estimate_at_or_below_-10": 0.033
+   },
+   "10": {
+    "PASS": 0.55,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.45,
+    "mean_S1_pct": 0.0,
+    "point_estimate_at_or_below_-10": 0.017
+   },
+   "11": {
+    "PASS": 0.567,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.433,
+    "mean_S1_pct": 0.6,
+    "point_estimate_at_or_below_-10": 0.017
+   },
+   "12": {
+    "PASS": 0.617,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.383,
+    "mean_S1_pct": -0.6,
+    "point_estimate_at_or_below_-10": 0.033
+   }
+  }
+ },
+ {
+  "scenario": "true E1 falls from 1.00 to 0.75 at week 9",
+  "events_per_week": 300,
+  "replicates": 100,
+  "runs_with_any_Monitor_or_Review_in_weeks_5_to_12": 0.04,
+  "by_week": {
+   "5": {
+    "PASS": 0.23,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.77,
+    "mean_S1_pct": 0.5,
+    "point_estimate_at_or_below_-10": 0.12
+   },
+   "6": {
+    "PASS": 0.2,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.8,
+    "mean_S1_pct": 0.7,
+    "point_estimate_at_or_below_-10": 0.12
+   },
+   "7": {
+    "PASS": 0.2,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.8,
+    "mean_S1_pct": 0.1,
+    "point_estimate_at_or_below_-10": 0.1
+   },
+   "8": {
+    "PASS": 0.22,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.78,
+    "mean_S1_pct": 0.8,
+    "point_estimate_at_or_below_-10": 0.08
+   },
+   "9": {
+    "PASS": 0.01,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.04,
+    "INSUFFICIENT_DATA": 0.95,
+    "mean_S1_pct": -19.6,
+    "point_estimate_at_or_below_-10": 0.89
+   },
+   "10": {
+    "PASS": 0.0,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 1.0,
+    "mean_S1_pct": -15.3,
+    "point_estimate_at_or_below_-10": 0.73
+   },
+   "11": {
+    "PASS": 0.02,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.98,
+    "mean_S1_pct": -12.5,
+    "point_estimate_at_or_below_-10": 0.59
+   },
+   "12": {
+    "PASS": 0.09,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.91,
+    "mean_S1_pct": -5.5,
+    "point_estimate_at_or_below_-10": 0.34
+   }
+  }
+ },
+ {
+  "scenario": "true E1 falls from 1.00 to 0.75 at week 9",
+  "events_per_week": 1000,
+  "replicates": 60,
+  "runs_with_any_Monitor_or_Review_in_weeks_5_to_12": 0.033,
+  "by_week": {
+   "5": {
+    "PASS": 0.6,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.4,
+    "mean_S1_pct": 0.9,
+    "point_estimate_at_or_below_-10": 0.0
+   },
+   "6": {
+    "PASS": 0.533,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.467,
+    "mean_S1_pct": -0.4,
+    "point_estimate_at_or_below_-10": 0.033
+   },
+   "7": {
+    "PASS": 0.517,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.483,
+    "mean_S1_pct": 0.2,
+    "point_estimate_at_or_below_-10": 0.0
+   },
+   "8": {
+    "PASS": 0.5,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.5,
+    "mean_S1_pct": 0.3,
+    "point_estimate_at_or_below_-10": 0.0
+   },
+   "9": {
+    "PASS": 0.0,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.033,
+    "INSUFFICIENT_DATA": 0.967,
+    "mean_S1_pct": -20.6,
+    "point_estimate_at_or_below_-10": 1.0
+   },
+   "10": {
+    "PASS": 0.0,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 1.0,
+    "mean_S1_pct": -16.7,
+    "point_estimate_at_or_below_-10": 0.917
+   },
+   "11": {
+    "PASS": 0.033,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.967,
+    "mean_S1_pct": -11.0,
+    "point_estimate_at_or_below_-10": 0.6
+   },
+   "12": {
+    "PASS": 0.083,
+    "MONITOR": 0.0,
+    "REVIEW_REQUIRED": 0.0,
+    "INSUFFICIENT_DATA": 0.917,
+    "mean_S1_pct": -7.0,
+    "point_estimate_at_or_below_-10": 0.3
+   }
+  }
+ }
+]

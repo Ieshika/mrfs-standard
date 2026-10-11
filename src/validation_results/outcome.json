@@ -1,0 +1,65 @@
+[
+ {
+  "system": "no outcome disparity (true O3 = 1.00)",
+  "n_events": 500,
+  "replicates": 200,
+  "mean_click_rate_small": 0.138,
+  "mean_conversion_rate_small": 0.0162,
+  "click_point_estimate_below_0.80": 0.155,
+  "click_status": {
+   "PASS": 0.125,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.875
+  },
+  "conversion_point_estimate_below_0.80": 0.395,
+  "conversion_status": {
+   "PASS": 0.02,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.005,
+   "INSUFFICIENT_DATA": 0.975
+  }
+ },
+ {
+  "system": "no outcome disparity (true O3 = 1.00)",
+  "n_events": 2000,
+  "replicates": 150,
+  "mean_click_rate_small": 0.136,
+  "mean_conversion_rate_small": 0.0161,
+  "click_point_estimate_below_0.80": 0.007,
+  "click_status": {
+   "PASS": 0.387,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.613
+  },
+  "conversion_point_estimate_below_0.80": 0.247,
+  "conversion_status": {
+   "PASS": 0.1,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.9
+  }
+ },
+ {
+  "system": "no outcome disparity (true O3 = 1.00)",
+  "n_events": 5000,
+  "replicates": 80,
+  "mean_click_rate_small": 0.136,
+  "mean_conversion_rate_small": 0.0167,
+  "click_point_estimate_below_0.80": 0.0,
+  "click_status": {
+   "PASS": 0.787,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.212
+  },
+  "conversion_point_estimate_below_0.80": 0.15,
+  "conversion_status": {
+   "PASS": 0.15,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.013,
+   "INSUFFICIENT_DATA": 0.838
+  }
+ }
+]

@@ -1,0 +1,104 @@
+[
+ {
+  "case": "unchanged version (relabelled only): 1.00 to 1.00",
+  "true_E1_current": 1.0,
+  "true_E1_new": 1.0,
+  "true_ratio": 1.0,
+  "n_events_per_version": 500,
+  "replicates": 200,
+  "mean_S2_ratio": 1.004,
+  "interval_wholly_below_1": 0.04,
+  "interval_covers_true_ratio": 0.94,
+  "new_version_E1_status": {
+   "PASS": 0.725,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.275
+  }
+ },
+ {
+  "case": "unchanged version (relabelled only): 1.00 to 1.00",
+  "true_E1_current": 1.0,
+  "true_E1_new": 1.0,
+  "true_ratio": 1.0,
+  "n_events_per_version": 2000,
+  "replicates": 100,
+  "mean_S2_ratio": 1.003,
+  "interval_wholly_below_1": 0.01,
+  "interval_covers_true_ratio": 0.97,
+  "new_version_E1_status": {
+   "PASS": 1.0,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.0
+  }
+ },
+ {
+  "case": "deterioration that changes the band: 1.00 to 0.85",
+  "true_E1_current": 1.001,
+  "true_E1_new": 0.836,
+  "true_ratio": 0.836,
+  "n_events_per_version": 500,
+  "replicates": 200,
+  "mean_S2_ratio": 0.84,
+  "interval_wholly_below_1": 0.475,
+  "interval_covers_true_ratio": 0.96,
+  "new_version_E1_status": {
+   "PASS": 0.01,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.005,
+   "INSUFFICIENT_DATA": 0.985
+  }
+ },
+ {
+  "case": "deterioration that changes the band: 1.00 to 0.85",
+  "true_E1_current": 1.001,
+  "true_E1_new": 0.836,
+  "true_ratio": 0.836,
+  "n_events_per_version": 2000,
+  "replicates": 100,
+  "mean_S2_ratio": 0.848,
+  "interval_wholly_below_1": 0.93,
+  "interval_covers_true_ratio": 0.95,
+  "new_version_E1_status": {
+   "PASS": 0.03,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.97
+  }
+ },
+ {
+  "case": "deterioration within the Pass band: 1.20 to 0.90",
+  "true_E1_current": 1.229,
+  "true_E1_new": 0.913,
+  "true_ratio": 0.743,
+  "n_events_per_version": 500,
+  "replicates": 200,
+  "mean_S2_ratio": 0.751,
+  "interval_wholly_below_1": 0.935,
+  "interval_covers_true_ratio": 0.96,
+  "new_version_E1_status": {
+   "PASS": 0.14,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.86
+  }
+ },
+ {
+  "case": "deterioration within the Pass band: 1.20 to 0.90",
+  "true_E1_current": 1.229,
+  "true_E1_new": 0.913,
+  "true_ratio": 0.743,
+  "n_events_per_version": 2000,
+  "replicates": 100,
+  "mean_S2_ratio": 0.749,
+  "interval_wholly_below_1": 1.0,
+  "interval_covers_true_ratio": 0.91,
+  "new_version_E1_status": {
+   "PASS": 0.57,
+   "MONITOR": 0.0,
+   "REVIEW_REQUIRED": 0.0,
+   "INSUFFICIENT_DATA": 0.43
+  }
+ }
+]

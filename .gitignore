@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+*.pyc
+.env
+
+# Curated release folder built by tools/make_release.py
+dist/
+tools/release_forbidden_terms.txt

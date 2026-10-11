@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this standard or its reference implementation, please cite it as below."
+title: "MRFS: Marketplace Ranking Fairness Standard"
+authors:
+  - family-names: "Chandra"
+    given-names: "Ieshika"
+version: "2.0.0"
+date-released: "2026-10-11"
+license:
+  - "CC-BY-4.0"
+  - "MIT"
+repository-code: "https://github.com/Ieshika/mrfs-standard"
+abstract: "MRFS is a technical standard for auditing how marketplace ranking and recommendation systems distribute top-ranked positions across seller cohorts. It comprises a technical standard (metrics with interval-based statuses, an audit procedure for platform audits and external assessments, a reference governance charter and a data specification), an overview, a validation report, and a Python reference implementation with synthetic validation. It draws on research on fairness of exposure in rankings; its thresholds and defaults are identified as MRFS design choices."
+keywords:
+  - algorithmic fairness
+  - marketplace ranking
+  - audit protocol
+  - AI governance
+  - exposure fairness
+# Concept DOI covering all versions of MRFS (not a version-specific DOI);
+# Zenodo assigns each release its own version DOI under this concept DOI.
+doi: 10.5281/zenodo.22073259
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.22073259
+    description: "Concept DOI covering all versions of MRFS"
