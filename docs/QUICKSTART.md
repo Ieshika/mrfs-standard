@@ -25,7 +25,7 @@ pip install -r requirements.txt
 | `seller_id` | Identifier of the listing's seller |
 | `rank_position` | Position in the ordered list (1 = top). Leave empty for a candidate that was considered but not placed in the list |
 
-Include every candidate the ranking system considered at the stage you are auditing, not only the listings shown. Without the candidates, E1 cannot tell whether a group is under-represented relative to what was available. If you can only see public results (an external assessment), include every result retrieved to a fixed depth.
+Include every candidate the ranking system considered at the stage you are auditing, not only the listings shown. Without the candidates, E1 cannot tell whether a group is under-represented relative to what was available. If you can only see public results, see [External assessment](#external-assessment-public-results-only) below.
 
 **`sellers.csv`**: one row per seller.
 
@@ -79,8 +79,11 @@ statuses = M.evaluate_statuses(declaration, e1)
 pd.set_option("display.width", 160); pd.set_option("display.max_columns", None)
 print(e1[["seller_size", "top_k_positions", "expected_positions", "E1", "E1_ci_lower", "E1_ci_upper", "n_events"]].round(3))
 print()
+print(f"ranking events used: {int(e1['n_events'].iloc[0])}, excluded: {int(e1['n_events_excluded'].iloc[0])}")
+if e1["n_events"].iloc[0] == 0:
+    print("No ranking events could be used: each needs more than K listings in its comparison population.")
 for r in statuses["E1"]:
-    print(f"{r['cohort']:<12} E1 {r['E1']:.3f}  status: {r['status']}")
+    print(f"{r['cohort']:<12} E1 {r['E1']:.3f}  status: {r['status'] or 'none (external assessment)'}")
 print()
 print(e2.round(3))
 print()
@@ -88,6 +91,27 @@ print(e3.round(3))
 ```
 
 Then run `python run_my_audit.py`.
+
+### External assessment (public results only)
+
+If you can see only the results a platform shows (for example, results you collected for a fixed set of searches), run an external assessment. Three things change:
+
+1. **`events.csv`** holds every result retrieved for each search, down to a fixed depth N, all with a `rank_position`. There are no unranked candidates.
+2. **N must be greater than K.** Searches with no more than K results in the file are excluded, so with N = K every search is excluded and E1 is empty. For K = 10, collect at least the top 20 or 30 results.
+3. **The declaration** says so:
+
+```python
+declaration = M.AuditDeclaration(
+    audit_mode="external",
+    population_type="retrieved",
+    population_detail="top 30 results for a fixed panel of 200 searches",
+    k=10,
+    cohort_definitions={"seller_size": "quartiles of active listing count (proxy), observed sellers"},
+    fixed_on="2026-10-20",
+)
+```
+
+The results describe placement among the retrieved results only, and carry no status. In an external assessment the seller groups usually come from publicly visible information such as listing counts, which should be labelled as a proxy. Collect and use only data you are entitled to use under the platform's terms.
 
 ## 4. Read the output
 
@@ -99,6 +123,7 @@ On the synthetic example, the first lines look like this:
 1      Medium           9079.0            8999.333  1.009        0.993        1.024      3000
 2       Small            766.0            1345.958  0.569        0.532        0.607      3000
 
+ranking events used: 3000, excluded: 0
 Large        E1 1.025  status: PASS
 Medium       E1 1.009  status: PASS
 Small        E1 0.569  status: REVIEW_REQUIRED

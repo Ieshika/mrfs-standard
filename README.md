@@ -43,6 +43,8 @@ python run_validation.py
 python generate_sample_audit_report.py
 ```
 
+The full `run_validation.py` run repeats thousands of bootstrap replicates and takes a long time; `python run_validation.py structure` runs one section in seconds. Rerunning the scripts overwrites the saved outputs; the only expected differences are the recorded numpy and pandas versions.
+
 See [`src/README.md`](src/README.md).
 
 ## Changes from v1.x
