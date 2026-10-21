@@ -23,6 +23,8 @@ A method for auditing how marketplace ranking and recommendation systems distrib
 
 The Technical Standard is the normative document; the Overview and the Validation Report are informative. References are in [`docs/References.md`](docs/References.md).
 
+**Applying MRFS to your own data:** see the [quickstart](docs/QUICKSTART.md), a short guide to the input files, the audit script and how to read the output.
+
 The PDFs are built from the sources in [`docs/publication/`](docs/publication/). The worked example (Technical Standard, Appendix A) and the Validation Report are generated from the committed results, so they contain no hand-copied figures. Building needs pandoc 3 and XeLaTeX (TeX Live, with the Latin Modern, TeX Gyre and DejaVu fonts):
 
 ```
