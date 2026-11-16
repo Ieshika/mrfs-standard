@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.1 -- 2026-11-15
+
+A patch release. The Technical Standard and the Overview are unchanged (2.0.0); the reference implementation and the Validation Report are updated.
+
+**Reference implementation**
+- `evaluate_statuses()` now enforces the Standard's rule that a status computed against a Review line other than the normative 0.80 is not an MRFS status (Technical Standard, Section 2.6). Such statuses are still computed but flagged: the result carries `mrfs_status: False` and a note. Results with the default 0.80 line are unchanged.
+- New test for this rule; `test_metrics.py` now has 22 tests.
+
+**Validation Report (2.0.1)**
+- States the number of bootstrap resamples: 500 in Sections 4 to 8 (`N_BOOT` in `run_validation.py`) and 400 in Section 9; the implementation default is 1,000. No figure changed.
+- Test count and description updated to 22 tests.
+
 ## 2.0.0 -- 2026-10-11
 
 A major version: the exposure metric E1 is redefined and its values are not comparable with v1.0 and v1.1.

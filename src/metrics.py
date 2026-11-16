@@ -59,6 +59,7 @@ import numpy as np
 import pandas as pd
 
 UNASSIGNED = "Unassigned"
+MRFS_REVIEW_LINE = 0.80      # normative (Technical Standard, Section 2.6)
 _CHUNK = 50
 
 
@@ -105,6 +106,12 @@ class AuditDeclaration:
     @property
     def carries_status(self) -> bool:
         return self.population_type == "candidates"
+
+    @property
+    def uses_mrfs_review_line(self) -> bool:
+        """True when the Review line is the normative MRFS 0.80. Any other value
+        gives exploratory results that are not MRFS statuses (Standard, Section 2.6)."""
+        return abs(float(self.review_line) - MRFS_REVIEW_LINE) < 1e-12
 
     @property
     def scope_label(self) -> str:
@@ -540,14 +547,22 @@ def evaluate_statuses(declaration: AuditDeclaration, e1: pd.DataFrame, outcome: 
     only when the declared comparison population is a candidate set, and they
     apply to the declared stage only. For a retrieved-results population the
     ratio and interval are reported without a status. The Unassigned group is
-    reported but never given a status. Metrics without data are listed as
+    reported but never given a status. A Review line other than the normative
+    0.80 gives exploratory statuses: they are computed, but flagged
+    (mrfs_status False, with a note) and must not be reported as MRFS statuses.
+    Metrics without data are listed as
     "Not evaluated"; they are never counted as a pass. An E1 row with zero
     expected positions (the cohort had no listings in the comparison
     population) has no defined ratio and is NOT_EVALUATED.
     """
     declaration.validate()
     cohort_col = e1.columns[0]
-    out = {"scope": declaration.scope_label, "carries_status": declaration.carries_status, "E1": [], "O3": None}
+    mrfs = declaration.carries_status and declaration.uses_mrfs_review_line
+    note = "" if declaration.uses_mrfs_review_line else (
+        f"Review line {declaration.review_line} differs from the normative MRFS {MRFS_REVIEW_LINE}: "
+        "statuses are exploratory and are not MRFS statuses")
+    out = {"scope": declaration.scope_label, "carries_status": declaration.carries_status,
+           "mrfs_status": mrfs, "note": note, "E1": [], "O3": None}
     for _, r in e1.iterrows():
         status = None
         if declaration.carries_status and r[cohort_col] != UNASSIGNED and not r["expected_positions"] > 0:
@@ -555,7 +570,8 @@ def evaluate_statuses(declaration: AuditDeclaration, e1: pd.DataFrame, outcome: 
         elif declaration.carries_status and r[cohort_col] != UNASSIGNED:
             status = classify_ci(r["E1_ci_lower"], r["E1_ci_upper"], declaration.review_line, declaration.monitor_line)
         out["E1"].append({"cohort": r[cohort_col], "E1": r["E1"], "ci_lower": r["E1_ci_lower"],
-                          "ci_upper": r["E1_ci_upper"], "status": status})
+                          "ci_upper": r["E1_ci_upper"], "status": status,
+                          "mrfs_status": bool(mrfs and status is not None)})
     if outcome is None:
         out["O3"] = "Not evaluated"
     else:

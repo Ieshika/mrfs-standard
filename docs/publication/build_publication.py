@@ -50,6 +50,8 @@ DOCS = [
     },
     {
         "name": "MRFS-Validation-Report",
+        "version": "2.0.1",
+        "date": "15 November 2026",
         "title": "MRFS Validation Report",
         "subtitle": "Behaviour of the reference implementation on synthetic data",
         "short": "MRFS Validation Report",
@@ -64,7 +66,8 @@ DOCS = [
 
 def fill(text: str, doc: dict) -> str:
     return (text.replace("{{TITLE}}", doc["title"]).replace("{{SUBTITLE}}", doc["subtitle"])
-            .replace("{{VERSION}}", VERSION).replace("{{STATUS}}", STATUS).replace("{{DATE}}", DATE))
+            .replace("{{VERSION}}", doc.get("version", VERSION)).replace("{{STATUS}}", STATUS)
+            .replace("{{DATE}}", doc.get("date", DATE)))
 
 
 def pandoc_fragment(md: Path, doc: dict, tmp: Path, numbered: bool) -> str:
@@ -78,7 +81,7 @@ def pandoc_fragment(md: Path, doc: dict, tmp: Path, numbered: bool) -> str:
 
 def build(doc: dict, tmp: Path) -> Path:
     meta = (f"\\newcommand{{\\mrfsshorttitle}}{{{doc['short']}}}\n"
-            f"\\newcommand{{\\mrfsversion}}{{Version {VERSION}}}\n"
+            f"\\newcommand{{\\mrfsversion}}{{Version {doc.get('version', VERSION)}}}\n"
             f"\\newcommand{{\\mrfsstatus}}{{{STATUS}}}\n")
     style = (STYLE / "mrfs-style.tex").read_text(encoding="utf-8")
     if doc.get("sectionbreak"):

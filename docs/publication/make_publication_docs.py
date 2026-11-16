@@ -204,7 +204,8 @@ def validation():
     a("**Measures.** Status rates are the share of independent replicates (fresh ranking events, same seller catalogue) "
       "returning each status. Coverage is the share of 95% intervals containing the true value. True values were computed "
       "from at least 100,000 events, except where the truth is known exactly. Rates from 30 to 60 replicates are "
-      "uncertain by several percentage points.\n")
+      "uncertain by several percentage points. Intervals in Sections 4 to 8 use 500 bootstrap resamples (`N_BOOT` in "
+      "`run_validation.py`); the reference implementation's default is 1,000. Section 9 uses 400.\n")
     a("**Reproduction.** Every table in this report is generated from the results saved in `src/validation_results/`, "
       "and every saved result is determined by the seeds in the script that produced it. The results were produced with "
       "Python 3.11, numpy 2.4.4 and pandas 3.0.2; the structure check (Section 4) and the worked example (Standard, "
@@ -220,12 +221,13 @@ def validation():
     a(": Files and commands that reproduce this report. Results are saved in `src/validation_results/`.\n")
 
     a("# Tests of the implementation\n")
-    a("`test_metrics.py` contains 21 tests. Each metric is checked against a value worked out by hand on a small "
+    a("`test_metrics.py` contains 22 tests. Each metric is checked against a value worked out by hand on a small "
       "example: E1, including the use of listing share rather than seller share, the exclusion of events with nothing to "
       "rank, and unordered candidates; E2's event weighting and declared depth; E3's inclusion of sellers without a top "
       "position; the status boundaries; size and tenure cohort assignment, including ties and calendar months across a "
       "leap day; the audit declaration rules; the determinism of the generator; S1 and S2; and the treatment of zero counts "
-      "in E1, O3, S1 and S2, including a cohort with no listings in the comparison population. All 21 pass.\n")
+      "in E1, O3, S1 and S2, including a cohort with no listings in the comparison population; and the flagging of statuses "
+      "computed against a Review line other than the normative 0.80 as exploratory rather than MRFS statuses. All 22 pass.\n")
 
     a("# Why E1 was redefined\n")
     a(f"On a ranking system that ignores cohort ({st['n_events']:,} ranking events):\n")

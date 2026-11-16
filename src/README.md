@@ -9,7 +9,7 @@ Requirements: Python 3 with numpy and pandas (see `requirements.txt` in the repo
 | File | Purpose |
 |---|---|
 | `metrics.py` | E1 (exposure ratio at K against a declared comparison population), E2 (normalised mean rank), E3 (exposure concentration), O1 to O3, S1 (drift), S2 (model regression), the audit declaration, default cohort assignment and status classification. The module docstring states the definitions. |
-| `test_metrics.py` | 21 tests with hand-worked expected values. |
+| `test_metrics.py` | 22 tests with hand-worked expected values. |
 | `generate_synthetic_audit.py` | Deterministic synthetic marketplace. Sizes are counted in ranking events; each event has its own candidate set. |
 | `run_validation.py` | Synthetic validation: E1 status rates, precision and coverage at 250 to 10,000 ranking events; drift, version-comparison and outcome checks. Results in `validation_results/`. |
 | `run_validation_review.py` | Focused review of the Monitor band and weekly drift (partial run; completed rows in `validation_results/review_band_and_drift_partial.json`, comparison with `metrics.py` in `validation_results/review_check.json`; see the MRFS Validation Report, Section 9). |

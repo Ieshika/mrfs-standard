@@ -281,6 +281,24 @@ def test_s1_stable_then_drop():
     assert abs(d["S1_pct"] - 100 * (d["E1_current"] / d["E1_baseline_mean"] - 1)) < 1e-9
 
 
+def test_non_mrfs_review_line_is_flagged_exploratory():
+    ev = pd.DataFrame({"event_id": ["e1"] * 12, "item_id": [f"i{i}" for i in range(12)],
+                       "seller_id": ["a"] * 6 + ["b"] * 6, "rank_position": list(range(1, 13))})
+    se = pd.DataFrame({"seller_id": ["a", "b"], "seller_size": ["Small", "Large"]})
+    e1 = M.exposure_ratio(ev, se, k=10, seed=1)
+    base = dict(audit_mode="platform", population_type="candidates", population_detail="final stage",
+                fixed_on="2026-11-15")
+    std = M.evaluate_statuses(M.AuditDeclaration(**base), e1)
+    assert std["mrfs_status"] is True and std["note"] == ""
+    assert all(r["mrfs_status"] for r in std["E1"] if r["status"] is not None)
+    alt = M.evaluate_statuses(M.AuditDeclaration(review_line=0.75, **base), e1)
+    assert alt["mrfs_status"] is False and "not MRFS statuses" in alt["note"]
+    assert not any(r["mrfs_status"] for r in alt["E1"])
+    ext = M.evaluate_statuses(M.AuditDeclaration(audit_mode="external", population_type="retrieved",
+                                                 population_detail="top 30", fixed_on="2026-11-15"), e1)
+    assert ext["mrfs_status"] is False and all(r["status"] is None for r in ext["E1"])
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

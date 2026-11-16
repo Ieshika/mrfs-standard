@@ -4,7 +4,7 @@
 
 A method for auditing how marketplace ranking and recommendation systems distribute visibility across groups of sellers, with stated uncertainty, and for governing what happens when an audit finds a potential disparity.
 
-**Status.** Version 2.0.0, published 11 October 2026. Version compatibility: E1 results from MRFS 2.0.0 are not directly comparable with those from MRFS 1.0 or 1.1 (see [`CHANGELOG.md`](CHANGELOG.md) and the Technical Standard, Appendix B).
+**Status.** Version 2.0.1, published 15 November 2026 (a patch release: the Technical Standard and Overview are unchanged at 2.0.0). Version compatibility: E1 results from MRFS 2.0.0 are not directly comparable with those from MRFS 1.0 or 1.1 (see [`CHANGELOG.md`](CHANGELOG.md) and the Technical Standard, Appendix B).
 
 ## What MRFS does and does not claim
 
